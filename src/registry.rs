@@ -15,7 +15,7 @@ use std::os::raw;
 use std::os::windows::prelude::*;
 
 /// Must never be `HKEY_PERFORMANCE_DATA`.
-pub(crate) struct RegistryKey(Repr);
+pub struct RegistryKey(Repr);
 
 type HKEY = *mut u8;
 type DWORD = u32;

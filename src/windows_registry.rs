@@ -173,7 +173,7 @@ pub mod impl_ {
     use super::MSVC_FAMILY;
     use crate::Tool;
 
-    struct MsvcTool {
+    pub struct MsvcTool {
         tool: PathBuf,
         libs: Vec<PathBuf>,
         path: Vec<PathBuf>,
@@ -208,7 +208,7 @@ pub mod impl_ {
     /// Checks to see if the `VSCMD_ARG_TGT_ARCH` environment variable matches the
     /// given target's arch. Returns `None` if the variable does not exist.
     #[cfg(windows)]
-    fn is_vscmd_target(target: &str) -> Option<bool> {
+    pub fn is_vscmd_target(target: &str) -> Option<bool> {
         let vscmd_arch = env::var("VSCMD_ARG_TGT_ARCH").ok()?;
         // Convert the Rust target arch to its VS arch equivalent.
         let arch = match target.split("-").next() {
@@ -247,12 +247,15 @@ pub mod impl_ {
         }
     }
 
-    fn find_msbuild_vs17(target: &str) -> Option<Tool> {
+    pub fn find_msbuild_vs17(target: &str) -> Option<Tool> {
         find_tool_in_vs16plus_path(r"MSBuild\Current\Bin\MSBuild.exe", target, "17")
     }
 
     #[allow(bare_trait_objects)]
-    fn vs16plus_instances(target: &str, version: &'static str) -> Box<Iterator<Item = PathBuf>> {
+    pub fn vs16plus_instances(
+        target: &str,
+        version: &'static str,
+    ) -> Box<Iterator<Item = PathBuf>> {
         let instances = if let Some(instances) = vs15plus_instances(target) {
             instances
         } else {
@@ -270,7 +273,11 @@ pub mod impl_ {
         }))
     }
 
-    fn find_tool_in_vs16plus_path(tool: &str, target: &str, version: &'static str) -> Option<Tool> {
+    pub fn find_tool_in_vs16plus_path(
+        tool: &str,
+        target: &str,
+        version: &'static str,
+    ) -> Option<Tool> {
         vs16plus_instances(target, version)
             .filter_map(|path| {
                 let path = path.join(tool);
@@ -289,7 +296,7 @@ pub mod impl_ {
             .next()
     }
 
-    fn find_msbuild_vs16(target: &str) -> Option<Tool> {
+    pub fn find_msbuild_vs16(target: &str) -> Option<Tool> {
         find_tool_in_vs16plus_path(r"MSBuild\Current\Bin\MSBuild.exe", target, "16")
     }
 
@@ -305,11 +312,11 @@ pub mod impl_ {
     //
     // However, on ARM64 this method doesn't work because VS Installer fails to register COM component on ARM64.
     // Hence, as the last resort we try to use vswhere.exe to list available instances.
-    fn vs15plus_instances(target: &str) -> Option<VsInstances> {
+    pub fn vs15plus_instances(target: &str) -> Option<VsInstances> {
         vs15plus_instances_using_com().or_else(|| vs15plus_instances_using_vswhere(target))
     }
 
-    fn vs15plus_instances_using_com() -> Option<VsInstances> {
+    pub fn vs15plus_instances_using_com() -> Option<VsInstances> {
         com::initialize().ok()?;
 
         let config = SetupConfiguration::new().ok()?;
@@ -318,7 +325,7 @@ pub mod impl_ {
         Some(VsInstances::ComBased(enum_setup_instances))
     }
 
-    fn vs15plus_instances_using_vswhere(target: &str) -> Option<VsInstances> {
+    pub fn vs15plus_instances_using_vswhere(target: &str) -> Option<VsInstances> {
         let program_files_path: PathBuf = env::var("ProgramFiles(x86)")
             .or_else(|_| env::var("ProgramFiles"))
             .ok()?
@@ -362,7 +369,7 @@ pub mod impl_ {
 
     // Inspired from official microsoft/vswhere ParseVersionString
     // i.e. at most four u16 numbers separated by '.'
-    fn parse_version(version: &str) -> Option<Vec<u16>> {
+    pub fn parse_version(version: &str) -> Option<Vec<u16>> {
         version
             .split('.')
             .map(|chunk| u16::from_str(chunk).ok())
@@ -389,7 +396,7 @@ pub mod impl_ {
     // we keep the registry method as a fallback option.
     //
     // [more reliable]: https://github.com/rust-lang/cc-rs/pull/331
-    fn find_tool_in_vs15_path(tool: &str, target: &str) -> Option<Tool> {
+    pub fn find_tool_in_vs15_path(tool: &str, target: &str) -> Option<Tool> {
         let mut path = match vs15plus_instances(target) {
             Some(instances) => instances
                 .into_iter()
@@ -421,7 +428,7 @@ pub mod impl_ {
         })
     }
 
-    fn tool_from_vs15plus_instance(
+    pub fn tool_from_vs15plus_instance(
         tool: &str,
         target: &str,
         instance_path: &PathBuf,
@@ -449,7 +456,7 @@ pub mod impl_ {
         Some(tool.into_tool())
     }
 
-    fn vs15plus_vc_paths(
+    pub fn vs15plus_vc_paths(
         target: &str,
         instance_path: &PathBuf,
     ) -> Option<(PathBuf, PathBuf, PathBuf, PathBuf, PathBuf)> {
@@ -488,7 +495,7 @@ pub mod impl_ {
         Some((path, bin_path, host_dylib_path, lib_path, include_path))
     }
 
-    fn atl_paths(target: &str, path: &Path) -> Option<(PathBuf, PathBuf)> {
+    pub fn atl_paths(target: &str, path: &Path) -> Option<(PathBuf, PathBuf)> {
         let atl_path = path.join("atlmfc");
         let sub = lib_subdir(target)?;
         if atl_path.exists() {
@@ -507,7 +514,7 @@ pub mod impl_ {
         Some(tool.into_tool())
     }
 
-    fn add_sdks(tool: &mut MsvcTool, target: &str) -> Option<()> {
+    pub fn add_sdks(tool: &mut MsvcTool, target: &str) -> Option<()> {
         let sub = lib_subdir(target)?;
         let (ucrt, ucrt_version) = get_ucrt_dir()?;
 
@@ -581,7 +588,7 @@ pub mod impl_ {
         Some(tool.into_tool())
     }
 
-    fn add_env(tool: &mut Tool, env: &str, paths: Vec<PathBuf>) {
+    pub fn add_env(tool: &mut Tool, env: &str, paths: Vec<PathBuf>) {
         let prev = env::var_os(env).unwrap_or(OsString::new());
         let prev = env::split_paths(&prev);
         let new = paths.into_iter().chain(prev);
@@ -591,7 +598,7 @@ pub mod impl_ {
 
     // Given a possible MSVC installation directory, we look for the linker and
     // then add the MSVC library path.
-    fn get_tool(tool: &str, path: &Path, target: &str) -> Option<MsvcTool> {
+    pub fn get_tool(tool: &str, path: &Path, target: &str) -> Option<MsvcTool> {
         bin_subdir(target)
             .into_iter()
             .map(|(sub, host)| {
@@ -729,7 +736,7 @@ pub mod impl_ {
     // linkers that can target the architecture we desire. The 64-bit host
     // linker is preferred, and hence first, due to 64-bit allowing it more
     // address space to work with and potentially being faster.
-    fn bin_subdir(target: &str) -> Vec<(&'static str, &'static str)> {
+    pub fn bin_subdir(target: &str) -> Vec<(&'static str, &'static str)> {
         let arch = target.split('-').next().unwrap();
         match (arch, host_arch()) {
             ("i586", X86) | ("i686", X86) => vec![("", "")],
@@ -742,7 +749,7 @@ pub mod impl_ {
         }
     }
 
-    fn lib_subdir(target: &str) -> Option<&'static str> {
+    pub fn lib_subdir(target: &str) -> Option<&'static str> {
         let arch = target.split('-').next().unwrap();
         match arch {
             "i586" | "i686" => Some("x86"),
@@ -754,7 +761,7 @@ pub mod impl_ {
     }
 
     // MSVC's x86 libraries are not in a subfolder
-    fn vc_lib_subdir(target: &str) -> Option<&'static str> {
+    pub fn vc_lib_subdir(target: &str) -> Option<&'static str> {
         let arch = target.split('-').next().unwrap();
         match arch {
             "i586" | "i686" => Some(""),
@@ -766,7 +773,7 @@ pub mod impl_ {
     }
 
     #[allow(bad_style)]
-    fn host_arch() -> u16 {
+    pub fn host_arch() -> u16 {
         type DWORD = u32;
         type WORD = u16;
         type LPVOID = *mut u8;
@@ -802,7 +809,7 @@ pub mod impl_ {
     // the maximal numeric value.
     //
     // Returns the name of the maximal key as well as the opened maximal key.
-    fn max_version(key: &RegistryKey) -> Option<(OsString, RegistryKey)> {
+    pub fn max_version(key: &RegistryKey) -> Option<(OsString, RegistryKey)> {
         let mut max_vers = 0;
         let mut max_key = None;
         for subkey in key.iter().filter_map(|k| k.ok()) {
@@ -854,7 +861,7 @@ pub mod impl_ {
         find_devenv_vs15(&target)
     }
 
-    fn find_devenv_vs15(target: &str) -> Option<Tool> {
+    pub fn find_devenv_vs15(target: &str) -> Option<Tool> {
         find_tool_in_vs15_path(r"Common7\IDE\devenv.exe", target)
     }
 
@@ -872,11 +879,11 @@ pub mod impl_ {
         }
     }
 
-    fn find_msbuild_vs15(target: &str) -> Option<Tool> {
+    pub fn find_msbuild_vs15(target: &str) -> Option<Tool> {
         find_tool_in_vs15_path(r"MSBuild\15.0\Bin\MSBuild.exe", target)
     }
 
-    fn find_old_msbuild(target: &str) -> Option<Tool> {
+    pub fn find_old_msbuild(target: &str) -> Option<Tool> {
         let key = r"SOFTWARE\Microsoft\MSBuild\ToolsVersions";
         LOCAL_MACHINE
             .open(key.as_ref())
