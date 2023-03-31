@@ -152,8 +152,9 @@ pub fn find_vs_version() -> Result<VsVers, String> {
     }
 }
 
+///
 #[cfg(windows)]
-mod impl_ {
+pub mod impl_ {
     use crate::com;
     use crate::registry::{RegistryKey, LOCAL_MACHINE};
     use crate::setup_config::SetupConfiguration;
@@ -621,7 +622,7 @@ mod impl_ {
 
     // To find MSVC we look in a specific registry key for the version we are
     // trying to find.
-    fn get_vc_dir(ver: &str) -> Option<PathBuf> {
+    pub fn get_vc_dir(ver: &str) -> Option<PathBuf> {
         let key = r"SOFTWARE\Microsoft\VisualStudio\SxS\VC7";
         let key = LOCAL_MACHINE.open(key.as_ref()).ok()?;
         let path = key.query_str(ver).ok()?;
@@ -634,7 +635,7 @@ mod impl_ {
     // what vcvars does so that's good enough for us.
     //
     // Returns a pair of (root, version) for the ucrt dir if found
-    fn get_ucrt_dir() -> Option<(PathBuf, String)> {
+    pub fn get_ucrt_dir() -> Option<(PathBuf, String)> {
         let key = r"SOFTWARE\Microsoft\Windows Kits\Installed Roots";
         let key = LOCAL_MACHINE.open(key.as_ref()).ok()?;
         let root = key.query_str("KitsRoot10").ok()?;
@@ -666,7 +667,7 @@ mod impl_ {
     // Before doing that, we check the "WindowsSdkDir" and "WindowsSDKVersion"
     // environment variables set by vcvars to use the environment sdk version
     // if one is already configured.
-    fn get_sdk10_dir() -> Option<(PathBuf, String)> {
+    pub fn get_sdk10_dir() -> Option<(PathBuf, String)> {
         if let (Ok(root), Ok(version)) = (env::var("WindowsSdkDir"), env::var("WindowsSDKVersion"))
         {
             return Some((root.into(), version.trim_end_matches('\\').to_string()));
@@ -695,14 +696,14 @@ mod impl_ {
     // `winv6.3`. Vcvars seems to only care about `winv6.3` though, so the same
     // applies to us. Note that if we were targeting kernel mode drivers
     // instead of user mode applications, we would care.
-    fn get_sdk81_dir() -> Option<PathBuf> {
+    pub fn get_sdk81_dir() -> Option<PathBuf> {
         let key = r"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v8.1";
         let key = LOCAL_MACHINE.open(key.as_ref()).ok()?;
         let root = key.query_str("InstallationFolder").ok()?;
         Some(root.into())
     }
 
-    fn get_sdk8_dir() -> Option<PathBuf> {
+    pub fn get_sdk8_dir() -> Option<PathBuf> {
         let key = r"SOFTWARE\Microsoft\Microsoft SDKs\Windows\v8.0";
         let key = LOCAL_MACHINE.open(key.as_ref()).ok()?;
         let root = key.query_str("InstallationFolder").ok()?;
